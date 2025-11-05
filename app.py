@@ -77,8 +77,8 @@ def answer_fn(message, history, rasp_len):
     return answer
 
 with gr.Blocks(theme="soft") as demo:
-    gr.Markdown("# Agent Asigurări (proto)")
-    gr.Markdown("Chat demo cu Perplexity API + context opțional din Supabase. Nu oferă consultanță juridică.")
+    gr.Markdown("# Agent BrokerAI Asigurări (proto)")
+    gr.Markdown("Chat demo BrokerAI.sorinolariu.org + context optional Supabase. Momentan nu ofera consultanta juridica.")
     len_radio = gr.Radio(choices=["scurt", "mediu"], value="scurt", label="Răspuns")
     chat = gr.ChatInterface(
         fn=lambda message, history: answer_fn(message, history, len_radio.value),
