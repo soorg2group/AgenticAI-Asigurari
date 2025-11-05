@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-# Evită deploy-uri paralele; păstrează doar cel mai recent job
+# Evită deploy-uri paralele
 concurrency:
   group: hf-space-deploy-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,10 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (no LFS, full history)
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false          # evită Git LFS pentru a nu declanșa 'lfs-check'
+          fetch-depth: 0      # istoric complet pentru a evita 'shallow update not allowed'
 
       - name: Configure Git
         run: |
@@ -32,24 +33,22 @@ jobs:
           HF_USERNAME: ${{ vars.HF_USERNAME }}
           SPACE_NAME: ${{ vars.SPACE_NAME }}
         run: |
-          set -e  # fail-fast: oprește la prima eroare
+          set -e  # fail-fast
           if [ -z "${HF_TOKEN}" ]; then
             echo "Lipsește secretul HF_TOKEN (Hugging Face token cu write)"; exit 1;
           fi
           if [ -z "${HF_USERNAME}" ] || [ -z "${SPACE_NAME}" ]; then
-            echo "Setează Repository variables HF_USERNAME și SPACE_NAME în GitHub -> Settings -> Variables -> Actions"; exit 1;
+            echo "Setează Repository variables HF_USERNAME și SPACE_NAME în GitHub -> Settings -> Secrets and variables -> Actions (tab Variables)"; exit 1;
           fi
 
           SPACE_URL="https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
           SPACE_REMOTE="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
 
           echo "Pushing to ${SPACE_URL}"
-          # Adaugă sau actualizează remote-ul 'space'
           if git remote get-url space > /dev/null 2>&1; then
             git remote set-url space "${SPACE_REMOTE}"
           else
             git remote add space "${SPACE_REMOTE}"
           fi
 
-          # Împinge HEAD către main-ul Space-ului (force pentru aliniere inițială)
           git push --force space HEAD:main
