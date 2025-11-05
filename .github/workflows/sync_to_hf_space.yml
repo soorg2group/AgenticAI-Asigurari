@@ -1,0 +1,44 @@
+name: Sync to Hugging Face Space
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Push to HF Space
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # Set your account and space names
+          HF_USERNAME="soorg2group"          # <-- schimba dacă userul tău HF e altul
+          SPACE_NAME="AgenticAI-Asigurari"   # <-- numele Space-ului tău
+
+          SPACE_URL="https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
+          SPACE_REMOTE="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
+
+          echo "Pushing to ${SPACE_URL}"
+          # Adaugă remote 'space' sau actualizează dacă există
+          if git remote get-url space > /dev/null 2>&1; then
+            git remote set-url space "${SPACE_REMOTE}"
+          else
+            git remote add space "${SPACE_REMOTE}"
+          fi
+
+          # Împinge HEAD către main-ul Space-ului (force pentru aliniere inițială)
+          git push --force space HEAD:main
